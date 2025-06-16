@@ -1,0 +1,45 @@
+version: "3.7"
+
+services:
+  nft:
+    container_name: nft
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - redis
+      - mailhog
+
+  redis:
+    image: redis:8.0.2
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    image: postgres:15.2-alpine
+    container_name: postgres-nft
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  postgres_data:
+  redis_data:
