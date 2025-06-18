@@ -1,5 +1,6 @@
 from fastapi import status
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 
 class Response(JSONResponse):
@@ -25,3 +26,7 @@ class Response(JSONResponse):
                 raise ValueError("meta_data is not a dict object")
             payload["metaData"] = kwargs.get("meta_data")
         super().__init__(content=payload, status_code=status_code)
+
+
+def serialize_response(serializer_class: type[BaseModel], instance: object) -> dict:
+    return serializer_class.model_validate(instance).model_dump()

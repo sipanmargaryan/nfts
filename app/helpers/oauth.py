@@ -5,9 +5,9 @@ from httpx import AsyncClient
 from oauthlib.oauth2 import WebApplicationClient
 from pydantic import BaseModel, Field
 
-from app.core.exceptions import AuthenticationFailedError
+from app.helpers.exceptions import AuthenticationFailedError
 from app.helpers.messages import INVALID_SOCIAL_AUTH_CODE
-from app.settings import FRONT_API, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URL
+from app.settings import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URL
 
 
 class ProviderEnum(Enum):

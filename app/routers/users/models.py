@@ -3,8 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import Column, ForeignKey, Integer, String, event
 from sqlalchemy.orm import relationship
 
-from app.core.database import BaseDBModel
-from app.routers.common.models import Country
+from app.helpers.database import BaseDBModel
 
 
 class UserProfile(BaseDBModel):
@@ -17,7 +16,7 @@ class UserProfile(BaseDBModel):
     last_name = Column(String, index=True)
 
     account = relationship("Account", back_populates="user_profile", uselist=False)
-    country = relationship(Country)
+    country = relationship("Country")
 
 
 @event.listens_for(UserProfile, "before_update")

@@ -1,14 +1,13 @@
-from fastapi import APIRouter, Depends, Request, status
-from fastapi.encoders import jsonable_encoder
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from app.core.exceptions import AuthenticationFailedError, ValidationError
+from app.helpers.database import get_db
+from app.helpers.exceptions import AuthenticationFailedError, ValidationError
 from app.helpers import messages
-from app.helpers.jwt import jwt_decode
 from app.helpers.mail import send_mail
 from app.helpers.middlewares import is_logged_in_middleware
 from app.helpers.response import Response
+from app.helpers.oauth import get_user_info_from_provider
 from app.settings import FRONT_API
 
 from .crud import (
@@ -17,9 +16,11 @@ from .crud import (
     get_active_user_by_email,
     get_user_by_auth_code_and_update,
     get_user_by_email,
+    get_active_user_by_refresh_token,
     update_auth_code,
     update_reset_pass_code,
     update_user_password,
+    update_refresh_token,
 )
 from .schemas import (
     AuthCodeValidationSchema,
@@ -28,7 +29,12 @@ from .schemas import (
     ResetPasswordSchema,
     UserLoginSchema,
     UserRegistrationSchema,
+    RefreshTokenSchema,
+    UserSchema,
+    SocialSignUpSchema,
+    SocialSignInSchema,
 )
+
 from .utils import (
     generate_auth_code,
     generate_reset_code,
@@ -68,7 +74,7 @@ async def sign_up(user: UserRegistrationSchema, db: Session = Depends(get_db)):
     return Response(message=messages.SUCCESS, status_code=status.HTTP_201_CREATED)
 
 
-@router.post("/check-user-by-auth-code")
+@router.post("/activate-user-by-auth-code")
 async def validate_auth_code(
     request: AuthCodeValidationSchema, db: Session = Depends(get_db)
 ):
@@ -84,7 +90,7 @@ async def validate_auth_code(
 
 
 @router.post("/sign-in")
-async def sign_up(login: UserLoginSchema, db: Session = Depends(get_db)):
+async def sign_in(login: UserLoginSchema, db: Session = Depends(get_db)):
     user = get_active_user_by_email(db, login.email)
     if user is None:
         raise AuthenticationFailedError()
@@ -92,6 +98,7 @@ async def sign_up(login: UserLoginSchema, db: Session = Depends(get_db)):
         raise AuthenticationFailedError()
 
     data = generate_tokens(user)
+    update_refresh_token(db, user, data["refresh_token"])
 
     return Response(data=data, message=messages.SUCCESS, status_code=status.HTTP_200_OK)
 
@@ -147,3 +154,67 @@ async def change_password(request: ChangePasswordSchema,
     update_user_password(db, user, request.password)
 
     return Response(message=messages.SUCCESS, status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.patch("/refresh-token")
+async def refresh_token(request: RefreshTokenSchema, db: Session = Depends(get_db)):
+    user = get_active_user_by_refresh_token(db, request.refresh_token)
+    if not user:
+        raise ValidationError(messages.INVALID_CODE)
+
+    data = generate_tokens(user, request.refresh_token)
+
+    return Response(
+        data=data, message=messages.SUCCESS, status_code=status.HTTP_204_NO_CONTENT
+    )
+
+
+@router.patch("/sign-out")
+async def sign_out(db: Session = Depends(get_db), user=Depends(is_logged_in_middleware())):
+    update_refresh_token(db, user, None, False)
+    return Response(message=messages.SUCCESS, status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/me")
+async def me(user_info=Depends(is_logged_in_middleware())):
+    user_info = UserSchema(
+        id=user_info.id,
+        email=user_info.email,
+        first_name=user_info.user_profile.first_name,
+        last_name=user_info.user_profile.last_name,
+    ).model_dump()
+    return Response(data=user_info, message=messages.SUCCESS, code=status.HTTP_200_OK)
+
+
+
+@router.post("/oauth/sign-up")
+async def social_sign_up(request: SocialSignUpSchema, db: Session = Depends(get_db)):
+    info = await get_user_info_from_provider(
+        request.provider,
+        request.code,
+    )
+    if get_active_user_by_email(db, info["email"]):
+        raise ValidationError(messages.EMAIL_EXISTS)
+    if get_user_by_email(db, info["email"]):
+        return Response(data=info, message=messages.SUCCESS, code=status.HTTP_200_OK)
+    create_user(
+        db,
+        email=info["email"],
+        first_name=info["first_name"],
+        last_name=info["last_name"],
+        country_id=request.country_id,
+    )
+    return Response(data=info, message=messages.SUCCESS, code=status.HTTP_200_OK)
+
+
+@router.post("/oauth/sign-in")
+async def social_sign_in(request: SocialSignInSchema, db: Session = Depends(get_db)):
+    info = await get_user_info_from_provider(
+        request.provider,
+        request.code,
+    )
+    user = get_active_user_by_email(info["email"], db)
+    if user:
+        data = generate_tokens(user)
+        return Response(data=data, message=messages.SUCCESS, code=status.HTTP_200_OK)
+    raise AuthenticationFailedError()

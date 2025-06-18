@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 
-from .core.exception_handlers import register_exception_handlers
-from .core.middleware import register_middlewares
-from .core.router_register import register_routers
+from .helpers.exception_handlers import register_exception_handlers
+from .helpers.middleware import register_middlewares
+from .helpers.router_register import register_routers
 
 
 def create_app() -> FastAPI:

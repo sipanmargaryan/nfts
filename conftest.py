@@ -6,13 +6,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.core.database import Base, get_db
+from app.helpers.database import Base, get_db
 from app.helpers.jwt import create_access_token
 from app.main import app
 from app.routers.auth.tests.factory import AccountFactory
 from app.routers.auth.utils import get_token_payload
-from app.routers.common.tests.factory import CountryFactory
+from app.routers.common.tests.factory import CountryFactory, IndustryFactory
 from app.routers.users.tests.factory import UserProfileFactory
+from app.routers.companies.tests.factory import CompanyProfileFactory, MintedNFTFactory
 
 load_dotenv()
 
@@ -51,6 +52,9 @@ def set_factory_session(db):
     CountryFactory._meta.sqlalchemy_session = db
     AccountFactory._meta.sqlalchemy_session = db
     UserProfileFactory._meta.sqlalchemy_session = db
+    IndustryFactory._meta.sqlalchemy_session = db
+    CompanyProfileFactory._meta.sqlalchemy_session = db
+    MintedNFTFactory._meta.sqlalchemy_session = db
 
 
 @pytest.fixture(scope="function")

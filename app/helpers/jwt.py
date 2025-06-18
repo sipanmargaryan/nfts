@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Optional
 
 import jwt
+from app.settings import JWT_REFRESH_TOKEN_EXPIRE_DAYS
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError, PyJWTError
 
@@ -10,7 +11,7 @@ from app.settings import JWT_SECRET
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-from ..core.exceptions import (
+from .exceptions import (
     JWTExpiredSignatureError,
     JWTInvalidTokenError,
     JWTTokenError,
@@ -19,7 +20,6 @@ from ..core.exceptions import (
 SECRET_KEY = JWT_SECRET
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
-REFRESH_TOKEN_EXPIRE_DAYS = 30
 
 
 def jwt_exception_handler(func):
@@ -54,7 +54,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 def create_refresh_token(data: dict):
     return create_access_token(
-        data, expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        data, expires_delta=timedelta(days=JWT_REFRESH_TOKEN_EXPIRE_DAYS)
     )
 
 

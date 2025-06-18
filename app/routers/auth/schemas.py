@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, WrapValidator, validate_email
 from pydantic_core import PydanticCustomError
 from typing_extensions import Annotated
 
-from app.core.exceptions import AuthenticationFailedError, ValidationError
+from app.helpers.exceptions import AuthenticationFailedError, ValidationError
 from app.helpers.messages import INVALID_EMAIL, INVALID_PASSWORD
 
 
@@ -87,5 +87,11 @@ class ProviderEnum(enum.Enum):
 
 
 class SocialSignUpSchema(BaseModel):
+    code: str
+    provider: ProviderEnum
+    country_id: int
+
+
+class SocialSignInSchema(BaseModel):
     code: str
     provider: ProviderEnum

@@ -15,6 +15,7 @@ DB_PORT = os.getenv("DB_PORT")
 
 # Auth
 JWT_SECRET = os.getenv("JWT_SECRET")
+JWT_REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS"))
 FRONT_API = os.getenv("FRONT_API")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -31,3 +32,7 @@ class EmailEnv:
     MAIL_STARTTLS = False if ENV == "local" else True
     MAIL_SSL_TLS = False
     USE_CREDENTIAL = False if ENV == "local" else True
+
+
+# Pinata
+PINATA_JWT = os.getenv("PINATA_JWT")

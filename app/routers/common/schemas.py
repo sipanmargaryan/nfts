@@ -8,5 +8,14 @@ class CountrySchema(BaseModel):
     id: int
 
 
+class IndustrySchema(BaseModel):
+    id: int
+    name: str
+
+
 class CountryListSchema(BaseModel):
     data: list[CountrySchema]
+
+
+class IndustryListSchema(BaseModel):
+    data: list[IndustrySchema]

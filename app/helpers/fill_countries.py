@@ -2,7 +2,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.core.database import SessionLocal, engine
+from app.helpers.database import SessionLocal, engine
 from app.routers.common.models import (  # Adjust import based on your project structure
     Country,
 )

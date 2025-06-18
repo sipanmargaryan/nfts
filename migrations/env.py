@@ -5,7 +5,7 @@ from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
-from app.core.database import Base
+from app.helpers.database import Base
 from app.routers.auth.models import *
 from app.routers.common.models import *
 from app.routers.companies.models import *

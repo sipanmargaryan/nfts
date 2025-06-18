@@ -1,4 +1,5 @@
 from fastapi import status
+from datetime import datetime, timezone, timedelta
 
 from app.helpers import messages
 from app.routers.auth.schemas import (
@@ -8,8 +9,10 @@ from app.routers.auth.schemas import (
     ResetPasswordSchema,
     UserLoginSchema,
     UserRegistrationSchema,
+    RefreshTokenSchema,
+    UserSchema,
 )
-from app.routers.auth.utils import get_password_hash
+from app.routers.auth.utils import get_password_hash, get_timedelta_from_hours
 from app.routers.common.tests.factory import CountryFactory
 from app.routers.users.tests.factory import UserProfileFactory
 
@@ -51,7 +54,7 @@ def test_validate_auth_code_success(client, db):
 
     payload = AuthCodeValidationSchema(code="testcode123").model_dump()
 
-    response = client.post("/auth/check-user-by-auth-code", json=payload)
+    response = client.post("/auth/activate-user-by-auth-code", json=payload)
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
     assert response.json()["data"]["email"] == account.email
@@ -61,7 +64,7 @@ def test_validate_auth_code_success(client, db):
 def test_validate_auth_code_invalid(client, db):
     payload = AuthCodeValidationSchema(code="wrongcode").model_dump()
 
-    response = client.post("/auth/check-user-by-auth-code", json=payload)
+    response = client.post("/auth/activate-user-by-auth-code", json=payload)
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert messages.INVALID_CODE == response.json()["detail"]["message"]
@@ -193,3 +196,64 @@ def test_change_password_invalid_old_password(client, db, auth_headers):
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json()["detail"]["message"] == messages.INVALID_PASSWORD
+
+
+
+def test_refresh_token_success(client, db):
+    refresh_token = "valid-refresh-token"
+    user = AccountFactory(
+        refresh_token=refresh_token,
+        refresh_token_expiration=get_timedelta_from_hours(hours=1),
+        active=True
+    )
+    UserProfileFactory(account=user)
+
+    data = RefreshTokenSchema(refresh_token=refresh_token).model_dump()
+
+    response = client.patch("/auth/refresh-token", json=data)
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+def test_refresh_token_invalid_token(client, db):
+    refresh_token = "expired-token"
+    user = AccountFactory(
+        refresh_token=refresh_token,
+        refresh_token_expiration=datetime.now(timezone.utc) - timedelta(hours=1),
+        active=True
+    )
+
+    data = RefreshTokenSchema(refresh_token=refresh_token).model_dump()
+
+    response = client.patch("/auth/refresh-token", json=data)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json()["detail"]["message"] == messages.INVALID_CODE
+
+
+def test_sign_out_success(client, db, auth_headers):
+    user = AccountFactory(refresh_token="some-refresh-token", active=True)
+    UserProfileFactory(account=user)
+
+    response = client.patch("/auth/sign-out", headers=auth_headers(user)
+)
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert user.refresh_token is None
+    assert user.refresh_token_expiration is None
+
+
+def test_get_me_success(client, db, auth_headers):
+    user = AccountFactory(active=True)
+    UserProfileFactory(account=user, first_name="John", last_name="Doe")
+
+    response = client.get("/auth/me", headers=auth_headers(user))
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()["data"]
+    expected = UserSchema(
+        id=user.id,
+        email=user.email,
+        first_name="John",
+        last_name="Doe"
+    ).model_dump()
+    assert data == expected

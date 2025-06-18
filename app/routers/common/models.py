@@ -1,8 +1,6 @@
-import enum
-
 from sqlalchemy import Column, Integer, String
 
-from app.core.database import BaseDBModel
+from app.helpers.database import BaseDBModel
 
 
 class Country(BaseDBModel):
@@ -12,3 +10,10 @@ class Country(BaseDBModel):
     code = Column(String(3), unique=True)
     dial_code = Column(String(5))
     name = Column(String, unique=True)
+
+
+class Industry(BaseDBModel):
+    __tablename__ = "industries"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)

@@ -16,6 +16,4 @@ Create `.env` file using `.env_template`
     make run
 
 
-## Git hook scripts
-Useful for identifying simple issues before submission to code review.
- - Run `pre-commit install`
+
