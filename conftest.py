@@ -12,8 +12,8 @@ from app.main import app
 from app.routers.auth.tests.factory import AccountFactory
 from app.routers.auth.utils import get_token_payload
 from app.routers.common.tests.factory import CountryFactory, IndustryFactory
-from app.routers.users.tests.factory import UserProfileFactory
 from app.routers.companies.tests.factory import CompanyProfileFactory, MintedNFTFactory
+from app.routers.users.tests.factory import UserProfileFactory
 
 load_dotenv()
 
@@ -88,4 +88,5 @@ def auth_headers():
     def _auth_headers(user):
         access_token = create_access_token(get_token_payload(user))
         return {"Authorization": f"Bearer {access_token}"}
+
     return _auth_headers

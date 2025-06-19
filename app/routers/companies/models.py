@@ -1,9 +1,19 @@
 from datetime import datetime, timezone
-from sqlalchemy import UniqueConstraint
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, JSON, event
-from sqlalchemy.orm import relationship
-from app.helpers.database import BaseDBModel
 
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    event,
+)
+from sqlalchemy.orm import relationship
+
+from app.helpers.database import BaseDBModel
 
 
 class CompanyProfile(BaseDBModel):
@@ -33,7 +43,7 @@ class MintedNFT(BaseDBModel):
 
     id = Column(Integer, primary_key=True)
     company_id = Column(Integer, ForeignKey("company_profiles.id"), nullable=False)
-    
+
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     metadata_ipfs_url = Column(String, nullable=False)

@@ -1,15 +1,16 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import status
-from datetime import datetime, timezone, timedelta
 
 from app.helpers import messages
 from app.routers.auth.schemas import (
     AuthCodeValidationSchema,
     ChangePasswordSchema,
     ForgotPasswordSchema,
+    RefreshTokenSchema,
     ResetPasswordSchema,
     UserLoginSchema,
     UserRegistrationSchema,
-    RefreshTokenSchema,
     UserSchema,
 )
 from app.routers.auth.utils import get_password_hash, get_timedelta_from_hours
@@ -165,14 +166,11 @@ def test_change_password_success(client, db, auth_headers):
     UserProfileFactory(account=user)
 
     data = ChangePasswordSchema(
-        old_password=old_password,
-        password=new_password
+        old_password=old_password, password=new_password
     ).model_dump()
 
     response = client.patch(
-        "/auth/change-password",
-        headers=auth_headers(user),
-        json=data
+        "/auth/change-password", headers=auth_headers(user), json=data
     )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -182,21 +180,16 @@ def test_change_password_invalid_old_password(client, db, auth_headers):
     user = AccountFactory(password=get_password_hash("correct-password"))
     UserProfileFactory(account=user)
 
-
     data = ChangePasswordSchema(
-        old_password="wrong-password",
-        password="new-password123"
+        old_password="wrong-password", password="new-password123"
     ).model_dump()
 
     response = client.patch(
-        "/auth/change-password",
-        headers=auth_headers(user),
-        json=data
+        "/auth/change-password", headers=auth_headers(user), json=data
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json()["detail"]["message"] == messages.INVALID_PASSWORD
-
 
 
 def test_refresh_token_success(client, db):
@@ -204,7 +197,7 @@ def test_refresh_token_success(client, db):
     user = AccountFactory(
         refresh_token=refresh_token,
         refresh_token_expiration=get_timedelta_from_hours(hours=1),
-        active=True
+        active=True,
     )
     UserProfileFactory(account=user)
 
@@ -220,7 +213,7 @@ def test_refresh_token_invalid_token(client, db):
     user = AccountFactory(
         refresh_token=refresh_token,
         refresh_token_expiration=datetime.now(timezone.utc) - timedelta(hours=1),
-        active=True
+        active=True,
     )
 
     data = RefreshTokenSchema(refresh_token=refresh_token).model_dump()
@@ -235,8 +228,7 @@ def test_sign_out_success(client, db, auth_headers):
     user = AccountFactory(refresh_token="some-refresh-token", active=True)
     UserProfileFactory(account=user)
 
-    response = client.patch("/auth/sign-out", headers=auth_headers(user)
-)
+    response = client.patch("/auth/sign-out", headers=auth_headers(user))
     assert response.status_code == status.HTTP_204_NO_CONTENT
     assert user.refresh_token is None
     assert user.refresh_token_expiration is None
@@ -251,9 +243,6 @@ def test_get_me_success(client, db, auth_headers):
     assert response.status_code == status.HTTP_200_OK
     data = response.json()["data"]
     expected = UserSchema(
-        id=user.id,
-        email=user.email,
-        first_name="John",
-        last_name="Doe"
+        id=user.id, email=user.email, first_name="John", last_name="Doe"
     ).model_dump()
     assert data == expected

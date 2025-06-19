@@ -1,15 +1,14 @@
 from datetime import datetime, timezone
 
-from app.settings import JWT_REFRESH_TOKEN_EXPIRE_DAYS
 from sqlalchemy.orm import Session
 
-from app.routers.users.models import UserProfile
 from app.routers.common.crud import insert_data
+from app.routers.users.models import UserProfile
+from app.settings import JWT_REFRESH_TOKEN_EXPIRE_DAYS
 
 from .models import Account
 from .schemas import UserRegistrationSchema
 from .utils import get_password_hash, get_timedelta_from_hours
-
 
 
 def get_user_by_email(db: Session, email: str) -> Account | None:
@@ -22,11 +21,15 @@ def get_active_user_by_id(db: Session, user_id: int) -> Account | None:
 
 def get_active_user_by_refresh_token(db: Session, refresh_token: str) -> Account | None:
     current_datetime = datetime.now(timezone.utc)
-    return db.query(Account).filter(
+    return (
+        db.query(Account)
+        .filter(
             Account.refresh_token == refresh_token,
             Account.refresh_token_expiration > current_datetime,
             Account.active == True,
-        ).first()
+        )
+        .first()
+    )
 
 
 def get_active_user_by_email(db: Session, email: str) -> Account | None:
@@ -113,10 +116,7 @@ def update_user_password(
 
 
 def update_refresh_token(
-    db: Session,
-    user: Account,
-    refresh_token: str,
-    set_expiration = True
+    db: Session, user: Account, refresh_token: str, set_expiration=True
 ) -> Account:
     expiration_date = None
     if set_expiration:

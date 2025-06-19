@@ -1,12 +1,13 @@
 import factory
+from factory.alchemy import SQLAlchemyModelFactory
 from faker import Faker
 
-from factory.alchemy import SQLAlchemyModelFactory
-from app.routers.companies.models import CompanyProfile, MintedNFT
 from app.routers.auth.tests.factory import AccountFactory
 from app.routers.common.tests.factory import CountryFactory, IndustryFactory
+from app.routers.companies.models import CompanyProfile, MintedNFT
 
 faker = Faker()
+
 
 class CompanyProfileFactory(SQLAlchemyModelFactory):
     class Meta:
@@ -23,7 +24,6 @@ class CompanyProfileFactory(SQLAlchemyModelFactory):
     verified = factory.Faker("boolean")
 
 
-
 class MintedNFTFactory(SQLAlchemyModelFactory):
     class Meta:
         model = MintedNFT
@@ -37,12 +37,14 @@ class MintedNFTFactory(SQLAlchemyModelFactory):
     chain = factory.Iterator(["ethereum", "polygon", "arbitrum", "optimism"])
     recipient_address = factory.LazyFunction(lambda: f"0x{faker.hexify(text='^' * 40)}")
     name = factory.Faker("word")
-    metadata_json = factory.LazyFunction(lambda: {
-        "name": "Sample NFT",
-        "description": "A generated NFT for testing.",
-        "image": "ipfs://samplehash",
-        "attributes": [
-            {"trait_type": "Background", "value": "Blue"},
-            {"trait_type": "Rarity", "value": "Rare"},
-        ]
-    })
+    metadata_json = factory.LazyFunction(
+        lambda: {
+            "name": "Sample NFT",
+            "description": "A generated NFT for testing.",
+            "image": "ipfs://samplehash",
+            "attributes": [
+                {"trait_type": "Background", "value": "Blue"},
+                {"trait_type": "Rarity", "value": "Rare"},
+            ],
+        }
+    )

@@ -1,7 +1,10 @@
 from datetime import datetime, timezone
+
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, event
 from sqlalchemy.orm import relationship
+
 from app.helpers.database import BaseDBModel
+
 
 class Account(BaseDBModel):
     __tablename__ = "accounts"

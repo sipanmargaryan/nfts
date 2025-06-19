@@ -1,11 +1,12 @@
 from fastapi import status
 
-from app.routers.common.tests.factory import CountryFactory, IndustryFactory
-from app.routers.users.tests.factory import UserProfileFactory
-from app.routers.auth.tests.factory import AccountFactory
-from .factory import CompanyProfileFactory, MintedNFTFactory
 from app.helpers import messages
+from app.routers.auth.tests.factory import AccountFactory
+from app.routers.common.tests.factory import CountryFactory, IndustryFactory
 from app.routers.companies.schemas import CompanyCreateSchema, MintedNFTUpdateToken
+from app.routers.users.tests.factory import UserProfileFactory
+
+from .factory import CompanyProfileFactory, MintedNFTFactory
 
 
 def test_create_company_success(client, db, auth_headers):
@@ -19,14 +20,11 @@ def test_create_company_success(client, db, auth_headers):
         country_id=country.id,
         company_name="Test Company",
         registration_number="",
-        bussines_phone_number=""
+        bussines_phone_number="",
     ).model_dump()
 
-
     response = client.post(
-        "/company/create-company",
-        headers=auth_headers(user),
-        json=payload
+        "/company/create-company", headers=auth_headers(user), json=payload
     )
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -42,21 +40,20 @@ def test_create_company_invalid_name(client, db, auth_headers):
     UserProfileFactory(account=user)
     country = CountryFactory()
     industry = IndustryFactory()
-    CompanyProfileFactory(account=user, country=country, industry=industry, company_name=company_name)
+    CompanyProfileFactory(
+        account=user, country=country, industry=industry, company_name=company_name
+    )
 
     payload = CompanyCreateSchema(
         industry_id=industry.id,
         country_id=country.id,
         company_name=company_name,
         registration_number="",
-        bussines_phone_number=""
+        bussines_phone_number="",
     ).model_dump()
 
-
     response = client.post(
-        "/company/create-company",
-        headers=auth_headers(user),
-        json=payload
+        "/company/create-company", headers=auth_headers(user), json=payload
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -72,13 +69,11 @@ def test_update_minted_nft_token_info_success(client, db, auth_headers):
     update_data = MintedNFTUpdateToken(
         company_id=company.id,
         token_id="0x123abc456",
-        recipient_address="0xAbC123456789000"
+        recipient_address="0xAbC123456789000",
     ).model_dump()
 
     response = client.put(
-        f"/company/minted-nfts/{nft.id}",
-        headers=auth_headers(user),
-        json=update_data
+        f"/company/minted-nfts/{nft.id}", headers=auth_headers(user), json=update_data
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -97,13 +92,11 @@ def test_update_minted_nft_token_invalid_company(client, db, auth_headers):
     update_data = MintedNFTUpdateToken(
         company_id=company.id + 100,
         token_id="0x123abc456",
-        recipient_address="0xAbC123456789000"
+        recipient_address="0xAbC123456789000",
     ).model_dump()
 
     response = client.put(
-        f"/company/minted-nfts/{nft.id}",
-        headers=auth_headers(user),
-        json=update_data
+        f"/company/minted-nfts/{nft.id}", headers=auth_headers(user), json=update_data
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -118,13 +111,13 @@ def test_update_minted_nft_token_invalid_nft(client, db, auth_headers):
     update_data = MintedNFTUpdateToken(
         company_id=company.id,
         token_id="0x123abc456",
-        recipient_address="0xAbC123456789000"
+        recipient_address="0xAbC123456789000",
     ).model_dump()
 
     response = client.put(
         f"/company/minted-nfts/{nft.id + 100}",
         headers=auth_headers(user),
-        json=update_data
+        json=update_data,
     )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND

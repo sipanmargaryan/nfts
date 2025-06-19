@@ -1,40 +1,39 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.helpers import messages
 from app.helpers.database import get_db
 from app.helpers.exceptions import AuthenticationFailedError, ValidationError
-from app.helpers import messages
 from app.helpers.mail import send_mail
 from app.helpers.middlewares import is_logged_in_middleware
-from app.helpers.response import Response
 from app.helpers.oauth import get_user_info_from_provider
+from app.helpers.response import Response
 from app.settings import FRONT_API
 
 from .crud import (
     check_user_reset_password_code,
     create_user,
     get_active_user_by_email,
+    get_active_user_by_refresh_token,
     get_user_by_auth_code_and_update,
     get_user_by_email,
-    get_active_user_by_refresh_token,
     update_auth_code,
+    update_refresh_token,
     update_reset_pass_code,
     update_user_password,
-    update_refresh_token,
 )
 from .schemas import (
     AuthCodeValidationSchema,
     ChangePasswordSchema,
     ForgotPasswordSchema,
+    RefreshTokenSchema,
     ResetPasswordSchema,
+    SocialSignInSchema,
+    SocialSignUpSchema,
     UserLoginSchema,
     UserRegistrationSchema,
-    RefreshTokenSchema,
     UserSchema,
-    SocialSignUpSchema,
-    SocialSignInSchema,
 )
-
 from .utils import (
     generate_auth_code,
     generate_reset_code,
@@ -143,11 +142,12 @@ async def reset_password(request: ResetPasswordSchema, db: Session = Depends(get
 
 
 @router.patch("/change-password")
-async def change_password(request: ChangePasswordSchema,
-                         db: Session = Depends(get_db),
-                         user=Depends(is_logged_in_middleware())
-                         ):
-    
+async def change_password(
+    request: ChangePasswordSchema,
+    db: Session = Depends(get_db),
+    user=Depends(is_logged_in_middleware()),
+):
+
     if not verify_password(request.old_password, user.password):
         raise ValidationError(messages.INVALID_PASSWORD)
 
@@ -170,7 +170,9 @@ async def refresh_token(request: RefreshTokenSchema, db: Session = Depends(get_d
 
 
 @router.patch("/sign-out")
-async def sign_out(db: Session = Depends(get_db), user=Depends(is_logged_in_middleware())):
+async def sign_out(
+    db: Session = Depends(get_db), user=Depends(is_logged_in_middleware())
+):
     update_refresh_token(db, user, None, False)
     return Response(message=messages.SUCCESS, status_code=status.HTTP_204_NO_CONTENT)
 
@@ -184,7 +186,6 @@ async def me(user_info=Depends(is_logged_in_middleware())):
         last_name=user_info.user_profile.last_name,
     ).model_dump()
     return Response(data=user_info, message=messages.SUCCESS, code=status.HTTP_200_OK)
-
 
 
 @router.post("/oauth/sign-up")

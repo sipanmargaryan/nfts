@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, Any
+from typing import Any, Optional
 
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CompanyCreateSchema(BaseModel):
@@ -37,6 +37,7 @@ class MintedNFTUpdateToken(BaseModel):
     recipient_address: Optional[str]
     company_id: int
 
+
 class MintedNFTOut(BaseModel):
     id: int
     company_id: int
@@ -47,5 +48,4 @@ class MintedNFTOut(BaseModel):
     chain: Optional[str]
     recipient_address: str
 
-    
     model_config = ConfigDict(from_attributes=True)

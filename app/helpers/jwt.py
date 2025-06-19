@@ -3,19 +3,14 @@ from functools import wraps
 from typing import Optional
 
 import jwt
-from app.settings import JWT_REFRESH_TOKEN_EXPIRE_DAYS
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError, PyJWTError
 
-from app.settings import JWT_SECRET
+from app.settings import JWT_REFRESH_TOKEN_EXPIRE_DAYS, JWT_SECRET
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-from .exceptions import (
-    JWTExpiredSignatureError,
-    JWTInvalidTokenError,
-    JWTTokenError,
-)
+from .exceptions import JWTExpiredSignatureError, JWTInvalidTokenError, JWTTokenError
 
 SECRET_KEY = JWT_SECRET
 ALGORITHM = "HS256"
