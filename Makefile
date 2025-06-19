@@ -32,7 +32,7 @@ report-fail:
 	$(RUN) poetry run pytest --cov-report term --cov-fail-under=90
 
 fill-countries:
-	docker-compose run --rm nft python3 -m app.helpers.fill_countries
+	docker-compose run --rm nft python3 -m app.helpers.fill.fill_countries
 
 fill-industries:
-	docker-compose run --rm nft python3 -m app.helpers.fill_industries
+	docker-compose run --rm nft python3 -m app.helpers.fill.fill_industries

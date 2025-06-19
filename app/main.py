@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from .helpers.exception_handlers import register_exception_handlers
-from .helpers.middleware import register_middlewares
+from .helpers.middlewares import register_middlewares
 from .helpers.router_register import register_routers
 
 
