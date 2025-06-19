@@ -35,4 +35,14 @@ class MintedNFTFactory(SQLAlchemyModelFactory):
     metadata_ipfs_url = factory.Faker("uri")
     token_id = factory.LazyFunction(lambda: faker.uuid4())
     chain = factory.Iterator(["ethereum", "polygon", "arbitrum", "optimism"])
-    recipient_address = factory.Faker("ethereum_address")
+    recipient_address = factory.LazyFunction(lambda: f"0x{faker.hexify(text='^' * 40)}")
+    name = factory.Faker("word")
+    metadata_json = factory.LazyFunction(lambda: {
+        "name": "Sample NFT",
+        "description": "A generated NFT for testing.",
+        "image": "ipfs://samplehash",
+        "attributes": [
+            {"trait_type": "Background", "value": "Blue"},
+            {"trait_type": "Rarity", "value": "Rare"},
+        ]
+    })

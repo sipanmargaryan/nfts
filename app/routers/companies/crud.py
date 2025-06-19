@@ -47,3 +47,18 @@ def user_owns_company(db: Session, user_id: int, company_id: int) -> CompanyProf
     )
 
     return company
+
+
+def update_token_info(db: Session, nft_id: int, company_id: int, token_id: str, recipient_address: str):
+    nft = db.query(MintedNFT).filter(
+        MintedNFT.id == nft_id,
+        MintedNFT.company_id == company_id
+    ).first()
+    
+    if not nft:
+        return None
+
+    nft.token_id = token_id
+    nft.recipient_address = recipient_address
+
+    return insert_data(db, nft)

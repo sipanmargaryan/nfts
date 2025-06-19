@@ -30,3 +30,22 @@ class MintedNFTCreate(BaseModel):
     metadata_ipfs_url: str
     metadata_json: Optional[Any]
     chain: str
+
+
+class MintedNFTUpdateToken(BaseModel):
+    token_id: Optional[str]
+    recipient_address: Optional[str]
+    company_id: int
+
+class MintedNFTOut(BaseModel):
+    id: int
+    company_id: int
+    name: str
+    description: Optional[str]
+    metadata_ipfs_url: str
+    token_id: Optional[str]
+    chain: Optional[str]
+    recipient_address: str
+
+    
+    model_config = ConfigDict(from_attributes=True)

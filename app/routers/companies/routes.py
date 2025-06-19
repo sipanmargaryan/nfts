@@ -2,15 +2,15 @@ import json
 from fastapi import APIRouter, Depends, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
 
-from app.helpers.exceptions import ValidationError, PermissionDeniedError
+from app.helpers.exceptions import ValidationError, PermissionDeniedError, NotFound
 from app.helpers.database import get_db
 from app.helpers import messages
 from app.helpers.middlewares import is_logged_in_middleware
 from app.helpers.response import Response, serialize_response
 from app.helpers.pinata import upload_file_to_pinata, upload_json_to_pinata
 
-from .schemas import CompanyCreateSchema, CompanyProfileResponse, MintedNFTCreate
-from .crud import get_company_by_name, create_new_company, save_nft, user_owns_company
+from .schemas import CompanyCreateSchema, CompanyProfileResponse, MintedNFTCreate, MintedNFTUpdateToken, MintedNFTOut
+from .crud import get_company_by_name, create_new_company, save_nft, user_owns_company, update_token_info
 
 
 router = APIRouter(
@@ -76,10 +76,31 @@ async def create_nft(
         chain="polygon",
     )
 
-    save_nft(db, nft)
+    minted_nft = save_nft(db, nft)
     
     return Response(
-        data=dict(token_uri=token_uri),
+        data=dict(token_uri=token_uri, id=minted_nft.id),
         message=messages.SUCCESS,
         status_code=status.HTTP_201_CREATED
+    )
+
+
+@router.put("/minted-nfts/{nft_id}")
+def update_minted_nft_token_info(
+    nft_id: int,
+    data: MintedNFTUpdateToken,
+    db: Session = Depends(get_db),
+    user = Depends(is_logged_in_middleware())
+):
+    if not user_owns_company(db, user.id, data.company_id):
+        raise PermissionDeniedError()
+        
+    updated_nft = update_token_info(db, nft_id, data.company_id, data.token_id, data.recipient_address)
+    if not updated_nft:
+        raise NotFound()
+    
+    return Response(
+        data=serialize_response(MintedNFTOut, updated_nft),
+        message=messages.SUCCESS,
+        status_code=status.HTTP_200_OK
     )
